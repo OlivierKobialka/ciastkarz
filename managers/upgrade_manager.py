@@ -17,13 +17,45 @@ class UpgradeManager:
         self.upgrade_option = upgrade_option
 
     def upgrade(self) -> None:
+        """
+        Upgrade the selected element
+        :return: None
+        """
         if self.upgrade_option:
             print(f"Upgrading option: {self.upgrade_option.name}")
             self.upgrade_option.upgrade()
 
+    def auto_upgrade(self):
+        """
+        Automatically upgrade the most profitable option.
+        :return: None
+        """
+        print("Auto-upgrading...")
+        most_profitable_option = self.most_profitable_option()
+        if most_profitable_option:
+            self.set_upgrade_option(most_profitable_option)
+            self.upgrade()
+        else:
+            print("No profitable upgrade option found.")
+
     def most_profitable_option(self) -> UpgradeOption:
+        """
+        CPS/Cost ratio or if possible then upgrade from store options
+        :return:
+        """
         print("Finding the most profitable option...")
 
+        # Check store upgrades first
+        store_upgrades = self.list_available_store_upgrade_options()
+        if store_upgrades:
+            print("Store upgrades are available. Selecting the most profitable store upgrade option...")
+            # Select the first store upgrade as all of them should be profitable
+            most_profitable_store_upgrade = store_upgrades[0]
+            print(f"Selected most profitable store upgrade option: {most_profitable_store_upgrade.name}")
+            return most_profitable_store_upgrade
+
+        # If no store upgrades are available, check other upgrade options
+        print("No store upgrades available. Checking other unlocked upgrade options...")
         upgrade_options = self.list_available_upgrade_options()
 
         for option in upgrade_options:
@@ -40,6 +72,10 @@ class UpgradeManager:
         return None
 
     def list_available_upgrade_options(self) -> list[UpgradeOption]:
+        """
+        List all available upgrade options on the page.
+        :return: list of UpgradeOption objects
+        """
         print("Listing available upgrade options...")
         products = self.driver.find_elements(By.CSS_SELECTOR, ".product.unlocked.enabled")
         upgrade_options = []
@@ -71,6 +107,35 @@ class UpgradeManager:
                 print(f"Error retrieving product info: {e}")
 
         return upgrade_options
+
+    def list_available_store_upgrade_options(self) -> list[UpgradeOption]:
+        """
+        List all available store upgrade options on the page.
+        :return: list of UpgradeOption objects but incomplete
+        """
+        print("Listing available store upgrade options...")
+        store_upgrades = self.driver.find_elements(By.CSS_SELECTOR, ".crate.upgrade.enabled")
+        upgrade_options = []
+
+        for upgrade in store_upgrades:
+            try:
+                upgrade_option = UpgradeOption(
+                    name=f"Upgrade {upgrade.get_attribute('data-id')}",
+                    id=upgrade.get_attribute("id"),
+                    cps=0,
+                    cost=0,
+                    owned=0,
+                    element=upgrade,
+                    driver=self.driver
+                )
+                upgrade_options.append(upgrade_option)
+                print(f"Found store upgrade option - ID: {upgrade_option.id}")
+
+            except Exception as e:
+                print(f"Error retrieving store upgrade info: {e}")
+
+        return upgrade_options
+
 
     def legacy_upgrade(self):
         # DOESNT WORK YET

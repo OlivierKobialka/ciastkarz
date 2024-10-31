@@ -3,30 +3,35 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 
 from managers.cookie_manager import CookieManager
 from managers.starter_manager import StarterManager
+from managers.statistics_manager import StatisticsManager
 from managers.upgrade_manager import UpgradeManager
 
 driver: WebDriver = webdriver.Chrome()
-starter_manager: StarterManager = StarterManager(driver)
+
+starter_manager: StarterManager = StarterManager(webdriver.Chrome())
 cookie_element, actions = starter_manager.start()
-cookie = CookieManager(cookie_element, driver, actions)
+
+cookie_manager = CookieManager(cookie_element, driver, actions)
 upgrade_manager = UpgradeManager([], driver)
+statistics_manager = StatisticsManager(driver)
 
-while True:
-    print("Clicking cookie...")
-    for _ in range(10):
-        actions.click(cookie_element).perform()
 
-    cookie_count = cookie.get_cookie_count()
-    print(f"Current cookie count: {cookie_count}")
+try:
+    while True:
+        for _ in range(10):
+            actions.click(cookie_element).perform()
+            cookie_manager.click_golden_cookie()
 
-    print("Available Upgrade Options:")
-    upgrade_options = upgrade_manager.list_available_upgrade_options()
+        statistics_manager.auto_stats()
+        upgrade_manager.auto_upgrade()
 
-    best_option = upgrade_manager.most_profitable_option()
-    if best_option:
-        upgrade_manager.set_upgrade_option(best_option)
-        print("Most Profitable Upgrade Option:", best_option.get_current_values())
-        upgrade_manager.upgrade()
-    # upgrade_manager.legacy_upgrade()
+        cookie_manager.click_golden_cookie()
 
-driver.quit()
+        # upgrade_manager.legacy_upgrade()
+
+
+except KeyboardInterrupt:
+    print("Stopping the bot...")
+
+finally:
+    driver.quit()

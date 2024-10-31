@@ -12,3 +12,7 @@ class CookieManager:
 
     def get_cookie_count(self) -> int:
         return self.driver.find_element(By.ID, "cookies").text.replace(" cookies", "").replace(" cookie", "")
+
+    def click_golden_cookie(self):
+        golden_cookie = self.driver.find_element(By.ID, "shimmers")
+        self.actions.click(golden_cookie).perform()
