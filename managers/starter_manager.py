@@ -1,7 +1,9 @@
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
-import time
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 
 class StarterManager:
@@ -11,16 +13,31 @@ class StarterManager:
     def start(self):
         print("Starting the game...")
         self.driver.get("https://orteil.dashnet.org/cookieclicker/")
-        time.sleep(1)
 
-        self.driver.find_element(By.CLASS_NAME, "fc-button-label").click()
+        try:
+            consent_button = WebDriverWait(self.driver, 2).until(
+                EC.element_to_be_clickable((By.CLASS_NAME, "fc-button-label"))
+            )
+            consent_button.click()
+        except TimeoutException:
+            print("Consent button not found or clickable!")
 
-        self.driver.find_element(By.ID, "langSelect-EN").click()
-        time.sleep(3)
+        try:
+            lang_button = WebDriverWait(self.driver, 2).until(
+                EC.element_to_be_clickable((By.ID, "langSelect-EN"))
+            )
+            lang_button.click()
+        except TimeoutException:
+            print("Language selection button not found or clickable!")
 
-        cookie_element = self.driver.find_element(By.ID, "bigCookie")
+        try:
+            cookie_element = WebDriverWait(self.driver, 2).until(
+                EC.presence_of_element_located((By.ID, "bigCookie"))
+            )
+        except TimeoutException:
+            print("Big cookie element not found!")
+
         actions: ActionChains = ActionChains(self.driver)
-
         return cookie_element, actions
 
     def end(self):

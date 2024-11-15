@@ -15,4 +15,5 @@ class CookieManager:
 
     def click_golden_cookie(self):
         golden_cookie = self.driver.find_element(By.ID, "shimmers")
-        self.actions.click(golden_cookie).perform()
+        if golden_cookie:
+            self.actions.click(golden_cookie).perform()

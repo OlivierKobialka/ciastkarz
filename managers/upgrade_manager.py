@@ -49,12 +49,10 @@ class UpgradeManager:
         store_upgrades = self.list_available_store_upgrade_options()
         if store_upgrades:
             print("Store upgrades are available. Selecting the most profitable store upgrade option...")
-            # Select the first store upgrade as all of them should be profitable
             most_profitable_store_upgrade = store_upgrades[0]
             print(f"Selected most profitable store upgrade option: {most_profitable_store_upgrade.name}")
             return most_profitable_store_upgrade
 
-        # If no store upgrades are available, check other upgrade options
         print("No store upgrades available. Checking other unlocked upgrade options...")
         upgrade_options = self.list_available_upgrade_options()
 
@@ -88,11 +86,17 @@ class UpgradeManager:
 
                 owned_text = product.find_element(By.CSS_SELECTOR, ".title.owned").text
                 owned = int(owned_text) if owned_text.isdigit() else 0
+                product_id = int(product.get_attribute("id").replace("product", ""))
+
+                cps_script = f"Game.ObjectsById[{product_id}].baseCps"
+                cps = self.driver.execute_script(cps_script)
+
+                print(f"Retrieved CPS data for product ID {product_id}: {cps}")
 
                 upgrade_option = UpgradeOption(
                     name=product.find_element(By.CSS_SELECTOR, ".title.productName").text,
                     id=product.get_attribute("id"),
-                    cps=int(price),
+                    cps=cps if cps else 0,
                     cost=price,
                     owned=owned,
                     element=product,
@@ -136,15 +140,13 @@ class UpgradeManager:
 
         return upgrade_options
 
-
     def legacy_upgrade(self):
-        # DOESNT WORK YET
         """
-        Click on "Legacy" upgrade option, then after modal pops up, click on "Ascend" button, wait for 5 seconds,
-        and click on "Reincarnate" button then "Yes" button.
+        Click on "Legacy" upgrade option, then after modal pops up, click on "Ascend" button,
+        wait for the elements dynamically using WebDriverWait, and click on "Reincarnate" button
+        followed by "Yes" button.
         """
         try:
-            # Check if the Legacy upgrade button is available and visible
             legacy_button = self.driver.find_elements(By.ID, "legacyButton")
             if not legacy_button or not legacy_button[0].is_displayed():
                 print("Legacy upgrade button not available or not visible. Waiting for the next opportunity to ascend.")
@@ -164,8 +166,6 @@ class UpgradeManager:
             ascend_button.click()
             print("Ascend button clicked.")
 
-            time.sleep(5)
-
             print("Waiting for Reincarnate button to appear...")
             reincarnate_button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "ascendButton"))
@@ -179,8 +179,6 @@ class UpgradeManager:
             )
             confirm_button.click()
             print("Confirmation button clicked. Ascension process completed.")
-
-            time.sleep(10)
 
         except (NoSuchElementException, TimeoutException, StaleElementReferenceException) as e:
             print(f"Error in legacy_upgrade: {e}")
