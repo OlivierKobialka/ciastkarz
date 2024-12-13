@@ -1,4 +1,6 @@
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 class CookieManager:
@@ -8,6 +10,7 @@ class CookieManager:
         self.actions = actions
 
     def click_cookie(self):
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "bigCookie")))
         self.actions.click(self.cookie).perform()
 
     def get_cookie_count(self) -> int:
